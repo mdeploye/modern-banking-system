@@ -288,10 +288,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Update account balance
+    // Update account balance - `balance` is a Float field, so use a number here
     await prisma.account.update({
       where: { id: account.id },
-      data: { balance: new Decimal(targetBalance) }
+      data: { balance: targetBalance }
     })
 
     // Calculate totals
