@@ -36,7 +36,7 @@ async function generateAccountNumber(): Promise<string> {
     select: { accountNumber: true }
   })
   
-  let sequence = 1000000001 // Start from 1000000001 (10 digits)
+  let sequence = 75472347 // Start after 7 5472346 as requested
   if (lastAccount) {
     // Parse the account number and increment
     const lastSequence = parseInt(lastAccount.accountNumber)
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       select: { accountNumber: true }
     })
     
-    let baseSequence = 71345808
+    let baseSequence = 75472347 // Starting after 7 5472346 as requested
     if (lastAccount) {
       baseSequence = parseInt(lastAccount.accountNumber) + 1
     }
