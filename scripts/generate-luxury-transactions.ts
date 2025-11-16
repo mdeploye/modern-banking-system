@@ -279,7 +279,8 @@ async function generateLuxuryTransactionHistory(
   // Update account balance
   await prisma.account.update({
     where: { id: account.id },
-    data: { balance: new Decimal(targetBalance) }
+    // `balance` is a Float field in Prisma schema, so it should be a number here
+    data: { balance: targetBalance }
   })
 
   console.log(`✅ Transaction history generated successfully!`)
