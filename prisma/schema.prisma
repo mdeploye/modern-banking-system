@@ -1,0 +1,288 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum AccountType {
+  SAVING
+  CURRENT
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  TRANSFER
+  OPENING
+}
+
+enum TransactionStatus {
+  PENDING
+  PENDING_APPROVAL
+  COMPLETED
+  FAILED
+  REVERSED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// Users table - unified for all user types
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String // hashed
+  role          Role     @default(CUSTOMER)
+  emailVerified DateTime?
+  
+  // Relations
+  customer      Customer?
+  admin         Admin?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("users")
+}
+
+// Customer specific details
+model Customer {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  firstName       String
+  lastName        String
+  gender          Gender
+  dateOfBirth     DateTime
+  mobile          String        @unique
+  landline        String?
+  
+  // Identification (US Standard)
+  ssn             String        @unique // Social Security Number (9 digits)
+  driversLicense  String        @unique // Driver's License Number
+  citizenship     String        @default("US Citizen")
+  
+  // Address (US Standard)
+  homeAddress     String
+  officeAddress   String?
+  country         String        @default("United States")
+  state           String
+  city            String
+  zipCode         String        // ZIP Code (5 digits)
+  areaLocality    String
+  
+  // Nominee
+  nomineeName     String?
+  nomineeAccount  String?
+  
+  // Account Information
+  customerNumber  String        @unique // Auto-generated
+  photo           String?       // URL to stored image
+  lastLogin       DateTime?
+  
+  // Account Restrictions
+  isRestricted    Boolean       @default(false)
+  restrictionType String?       // e.g., "WITHDRAWAL_LIMIT", "TRANSFER_BLOCKED", "FROZEN"
+  restrictionReason String?     // Admin's reason for restriction
+  restrictedBy    String?       // Admin ID who applied restriction
+  restrictedAt    DateTime?
+  restrictionExpiry DateTime?   // Optional expiry date
+  
+  // Relations
+  accounts        Account[]
+  beneficiaries   Beneficiary[]
+  sentTransfers   Transaction[] @relation("SenderTransactions")
+  receivedTransfers Transaction[] @relation("ReceiverTransactions")
+  auditLogs       AuditLog[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([customerNumber])
+  @@index([mobile])
+  @@map("customers")
+}
+
+// Bank Accounts
+model Account {
+  id              String        @id @default(cuid())
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  accountNumber   String        @unique // Auto-generated
+  accountType     AccountType
+  status          AccountStatus @default(PENDING)
+  balance         Decimal       @default(0) @db.Decimal(15, 2)
+  
+  branch          String        @default("Main Branch")
+  ifscCode        String        @default("BNKJ0001011")
+  
+  // Debit Card
+  debitCardNumber String?       @unique
+  debitCardPin    String?       // hashed
+  cvv             String?       // encrypted
+  cardIssueDate   DateTime?
+  cardExpiryDate  DateTime?
+  
+  // Dates
+  openingDate     DateTime      @default(now())
+  closingDate     DateTime?
+  approvedBy      String?       // Staff ID who approved
+  approvedAt      DateTime?
+  
+  // Relations
+  transactions    Transaction[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([accountNumber])
+  @@index([customerId])
+  @@map("accounts")
+}
+
+// Admin members
+model Admin {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  firstName       String
+  lastName        String
+  adminNumber     String    @unique
+  mobile          String    @unique
+  gender          Gender
+  department      String    @default("Administration")
+  dateOfBirth     DateTime
+  citizenship     String
+  pan             String    @unique
+  homeAddress     String
+  lastLogin       DateTime?
+  
+  // Permissions
+  canApproveAccounts    Boolean @default(true)
+  canRestrictAccounts   Boolean @default(true)
+  canCreditDebit        Boolean @default(true)
+  canViewAllCustomers   Boolean @default(true)
+  
+  // Relations
+  auditLogs       AuditLog[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([adminNumber])
+  @@map("admins")
+}
+
+// Beneficiaries for fund transfers
+model Beneficiary {
+  id              String    @id @default(cuid())
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  name            String
+  accountNumber   String
+  ifscCode        String
+  accountType     AccountType
+  isActive        Boolean   @default(true)
+  
+  addedAt         DateTime  @default(now())
+  
+  @@unique([customerId, accountNumber])
+  @@index([customerId])
+  @@map("beneficiaries")
+}
+
+// Transactions - unified table for all transaction types
+model Transaction {
+  id              String            @id @default(cuid())
+  transactionId   String            @unique // Display ID
+  
+  // Account Information
+  accountId       String
+  account         Account           @relation(fields: [accountId], references: [id])
+  
+  // Transaction Details
+  type            TransactionType
+  amount          Decimal           @db.Decimal(15, 2)
+  balanceBefore   Decimal           @db.Decimal(15, 2)
+  balanceAfter    Decimal           @db.Decimal(15, 2)
+  
+  // Transfer specific
+  senderId        String?
+  sender          Customer?         @relation("SenderTransactions", fields: [senderId], references: [id])
+  receiverId      String?
+  receiver        Customer?         @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+  receiverAccount String?
+  receiverIFSC    String?
+  
+  // Metadata
+  description     String
+  remark          String?
+  status          TransactionStatus @default(COMPLETED)
+  
+  // OTP for transfers
+  otpCode         String?
+  otpVerified     Boolean           @default(false)
+  otpExpiresAt    DateTime?
+  
+  transactionDate DateTime          @default(now())
+  
+  @@index([accountId])
+  @@index([transactionId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("transactions")
+}
+
+// Audit Log for tracking all actions
+model AuditLog {
+  id          String   @id @default(cuid())
+  
+  // Who performed the action
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  adminId     String?
+  admin       Admin?    @relation(fields: [adminId], references: [id])
+  
+  // What was done
+  action      String    // e.g., "LOGIN", "FUND_TRANSFER", "ACCOUNT_APPROVED"
+  entity      String?   // e.g., "ACCOUNT", "TRANSACTION"
+  entityId    String?   // ID of the affected entity
+  details     String?   // JSON string with additional details
+  
+  ipAddress   String?
+  userAgent   String?
+  
+  timestamp   DateTime  @default(now())
+  
+  @@index([customerId])
+  @@index([adminId])
+  @@index([action])
+  @@map("audit_logs")
+}
