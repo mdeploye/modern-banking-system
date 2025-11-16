@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import prisma from "@/lib/prisma"
-import { Role } from "@prisma/client"
+// Removed Role import since we're using String type
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
@@ -92,7 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as Role
+        session.user.role = token.role as string
         session.user.customerId = token.customerId as string | undefined
         session.user.adminId = token.adminId as string | undefined
         session.user.isRestricted = token.isRestricted as boolean | undefined
@@ -106,7 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 declare module "next-auth" {
   interface User {
-    role: Role
+    role: string
     customerId?: string
     adminId?: string
     isRestricted?: boolean
@@ -118,7 +118,7 @@ declare module "next-auth" {
     user: {
       id: string
       email: string
-      role: Role
+      role: string
       customerId?: string
       adminId?: string
       isRestricted?: boolean
@@ -131,7 +131,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string
-    role: Role
+    role: string
     customerId?: string
     adminId?: string
     isRestricted?: boolean

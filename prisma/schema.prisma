@@ -6,55 +6,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-enum Role {
-  CUSTOMER
-  ADMIN
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "CUSTOMER", "ADMIN"
 
-enum AccountType {
-  SAVING
-  CURRENT
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "SAVING", "CURRENT"
 
-enum AccountStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-  CLOSED
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "PENDING", "ACTIVE", "SUSPENDED", "CLOSED"
 
-enum TransactionType {
-  CREDIT
-  DEBIT
-  TRANSFER
-  OPENING
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "CREDIT", "DEBIT", "TRANSFER", "OPENING"
 
-enum TransactionStatus {
-  PENDING
-  PENDING_APPROVAL
-  COMPLETED
-  FAILED
-  REVERSED
-  REJECTED
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "PENDING", "PENDING_APPROVAL", "COMPLETED", "FAILED", "REVERSED", "REJECTED"
 
-enum Gender {
-  MALE
-  FEMALE
-  OTHER
-}
+// Using String instead of enum for SQLite compatibility
+// Valid values: "MALE", "FEMALE", "OTHER"
 
 // Users table - unified for all user types
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
   password      String // hashed
-  role          Role     @default(CUSTOMER)
+  role          String   @default("CUSTOMER")
   emailVerified DateTime?
   
   // Relations
@@ -76,7 +55,7 @@ model Customer {
   // Personal Information
   firstName       String
   lastName        String
-  gender          Gender
+  gender          String
   dateOfBirth     DateTime
   mobile          String        @unique
   landline        String?
@@ -134,9 +113,9 @@ model Account {
   customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
   accountNumber   String        @unique // Auto-generated
-  accountType     AccountType
-  status          AccountStatus @default(PENDING)
-  balance         Decimal       @default(0) @db.Decimal(15, 2)
+  accountType     String
+  status          String   @default("PENDING")
+  balance         Float         @default(0)
   
   branch          String        @default("Main Branch")
   ifscCode        String        @default("BNKJ0001011")
@@ -175,7 +154,7 @@ model Admin {
   lastName        String
   adminNumber     String    @unique
   mobile          String    @unique
-  gender          Gender
+  gender          String
   department      String    @default("Administration")
   dateOfBirth     DateTime
   citizenship     String
@@ -208,7 +187,7 @@ model Beneficiary {
   name            String
   accountNumber   String
   ifscCode        String
-  accountType     AccountType
+  accountType     String
   isActive        Boolean   @default(true)
   
   addedAt         DateTime  @default(now())
@@ -228,10 +207,10 @@ model Transaction {
   account         Account           @relation(fields: [accountId], references: [id])
   
   // Transaction Details
-  type            TransactionType
-  amount          Decimal           @db.Decimal(15, 2)
-  balanceBefore   Decimal           @db.Decimal(15, 2)
-  balanceAfter    Decimal           @db.Decimal(15, 2)
+  type            String
+  amount          Float
+  balanceBefore   Float
+  balanceAfter    Float
   
   // Transfer specific
   senderId        String?
@@ -244,7 +223,7 @@ model Transaction {
   // Metadata
   description     String
   remark          String?
-  status          TransactionStatus @default(COMPLETED)
+  status          String   @default("COMPLETED")
   
   // OTP for transfers
   otpCode         String?
