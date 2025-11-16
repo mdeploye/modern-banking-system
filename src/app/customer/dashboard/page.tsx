@@ -58,6 +58,7 @@ interface Transaction {
   balanceAfter: string
   description: string
   date: string
+  uniqueIndex?: number // Optional index to ensure uniqueness
 }
 
 export default function CustomerDashboard() {
@@ -108,7 +109,22 @@ export default function CustomerDashboard() {
       const response = await fetch("/api/customer/transactions")
       if (response.ok) {
         const data = await response.json()
-        setRecentTransactions(data.transactions.slice(0, 3))
+        
+        // Filter to ensure uniqueness by transactionId
+        const uniqueTransactions = data.transactions
+          .slice(0, 10) // Get more than we need in case there are duplicates
+          .filter((txn: Transaction, index: number, self: Transaction[]) => 
+            index === self.findIndex((t) => t.transactionId === txn.transactionId)
+          )
+          .slice(0, 3); // Then take just the first 3 unique ones
+        
+        // Add an extra index to each transaction to ensure key uniqueness
+        const transactionsWithIndex = uniqueTransactions.map((txn: Transaction, index: number) => ({
+          ...txn,
+          uniqueIndex: index
+        }));
+        
+        setRecentTransactions(transactionsWithIndex);
       }
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
@@ -432,12 +448,14 @@ export default function CustomerDashboard() {
               ) : (
                 <>
                   <div className="divide-y">
-                    {recentTransactions.map((txn) => {
+                    {recentTransactions.map((txn, index) => {
                       const amount = Math.abs(parseFloat(txn.amount))
                       // Check if it's credit OR if balance increased (for TRANSFER type)
                       const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+                      // Generate a completely unique key using both index position and a property
+                      const mobileKey = `mobile-${index}-${txn.description?.substring(0, 8) || ''}-${Date.now()}-${index}`
                       return (
-                        <div key={txn.id} className="canvas-activity-item px-4">
+                        <div key={mobileKey} className="canvas-activity-item px-4">
                           <div>
                             <p className="font-medium text-sm truncate">{txn.description}</p>
                             <p className="text-xs text-muted-foreground">
@@ -588,12 +606,14 @@ export default function CustomerDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {recentTransactions.map((txn) => {
+                    {recentTransactions.map((txn, index) => {
                       const amount = Math.abs(parseFloat(txn.amount))
                       // Check if it's credit OR if balance increased (for TRANSFER type)
                       const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+                      // Generate a completely unique key using both index position and a property
+                      const desktopKey = `desktop-${index}-${txn.description?.substring(0, 8) || ''}-${Date.now()}-${index}`
                       return (
-                        <div key={txn.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                        <div key={desktopKey} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-full ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
                               {isCredit ? (

@@ -25,7 +25,8 @@ let count = 0
 
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
-  return count.toString()
+  // Generate a more robust unique ID using timestamp and random values
+  return `toast-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${count}`
 }
 
 type ActionType = typeof actionTypes

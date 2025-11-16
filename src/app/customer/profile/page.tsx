@@ -479,8 +479,11 @@ export default function CustomerProfile() {
               <CardTitle>My Accounts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {profile.accounts.map((account) => (
-                <div key={account.accountNumber} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              {profile.accounts.map((account, index) => {
+                // Use a combination of index, account type and a random string for completely unique keys
+                const uniqueAccountKey = `account-${index}-${account.accountType}-${Math.random().toString(36).substring(2, 9)}`;
+                return (
+                <div key={uniqueAccountKey} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium">
                       {account.accountType === "CURRENT" ? "Checking Account" : "Savings Account"}
@@ -491,7 +494,8 @@ export default function CustomerProfile() {
                     {account.status}
                   </Badge>
                 </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 

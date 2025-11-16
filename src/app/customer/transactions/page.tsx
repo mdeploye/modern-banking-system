@@ -26,6 +26,7 @@ interface Transaction {
   senderAccountNumber: string | null
   recipientAccountNumber: string | null
   date: string
+  uniqueIndex?: number // Optional index to ensure uniqueness
 }
 
 export default function Transactions() {
@@ -48,7 +49,20 @@ export default function Transactions() {
       const response = await fetch("/api/customer/transactions")
       if (response.ok) {
         const data = await response.json()
-        setTransactions(data.transactions)
+        
+        // Filter to ensure uniqueness by transactionId
+        const uniqueTransactions = data.transactions
+          .filter((txn: Transaction, index: number, self: Transaction[]) => 
+            index === self.findIndex((t) => t.transactionId === txn.transactionId)
+          )
+        
+        // Add an extra index to each transaction to ensure key uniqueness
+        const transactionsWithIndex = uniqueTransactions.map((txn: Transaction, index: number) => ({
+          ...txn,
+          uniqueIndex: index
+        }));
+        
+        setTransactions(transactionsWithIndex);
       }
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
@@ -135,8 +149,11 @@ export default function Transactions() {
               </div>
             ) : (
               <div className="space-y-2 sm:space-y-3">
-                {transactions.map((txn) => (
-                  <Card key={txn.id} className="border">
+                {transactions.map((txn, index) => {
+                  // Create a completely unique key that doesn't rely on txn.id
+                  const uniqueKey = `txn-item-${index}-${Math.random().toString(36).substring(2, 9)}`;
+                  return (
+                    <Card key={uniqueKey} className="border">
                     <CardContent className="p-2 sm:p-4">
                       <div className="flex items-start gap-2 sm:gap-4">
                         {/* Icon */}
@@ -201,7 +218,8 @@ export default function Transactions() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

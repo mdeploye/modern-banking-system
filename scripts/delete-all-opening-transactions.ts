@@ -9,9 +9,11 @@ async function main() {
   const openingTransactions = await prisma.transaction.findMany({
     where: {
       OR: [
-        { description: { contains: 'Initial Account Funding', mode: 'insensitive' } },
-        { description: { contains: 'Account Opening', mode: 'insensitive' } },
-        { description: { contains: 'Opening Account', mode: 'insensitive' } },
+        // NOTE: Current Prisma StringFilter for this model doesn't support `mode`,
+        // so we use simple `contains` filters (case-sensitive) for compatibility.
+        { description: { contains: 'Initial Account Funding' } },
+        { description: { contains: 'Account Opening' } },
+        { description: { contains: 'Opening Account' } },
         { type: 'OPENING' },
       ]
     },
@@ -40,9 +42,9 @@ async function main() {
   const result = await prisma.transaction.deleteMany({
     where: {
       OR: [
-        { description: { contains: 'Initial Account Funding', mode: 'insensitive' } },
-        { description: { contains: 'Account Opening', mode: 'insensitive' } },
-        { description: { contains: 'Opening Account', mode: 'insensitive' } },
+        { description: { contains: 'Initial Account Funding' } },
+        { description: { contains: 'Account Opening' } },
+        { description: { contains: 'Opening Account' } },
         { type: 'OPENING' },
       ]
     }

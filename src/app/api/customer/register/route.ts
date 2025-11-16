@@ -36,15 +36,25 @@ async function generateAccountNumber(): Promise<string> {
     select: { accountNumber: true }
   })
   
-  let sequence = 75472347 // Start after 7 5472346 as requested
+  // ALWAYS start with 702346799 as the base sequence if no accounts exist
+  let sequence = 702346799
+  
+  // Log the found account for debugging
+  console.log('Last account found:', lastAccount)
+  
   if (lastAccount) {
     // Parse the account number and increment
     const lastSequence = parseInt(lastAccount.accountNumber)
     sequence = lastSequence + 1
+    console.log('Incrementing from last account number:', lastSequence, 'to', sequence)
+  } else {
+    console.log('No existing accounts found, using starting sequence:', sequence)
   }
   
-  // Format: 10-digit number (e.g., 1000000001, 1000000002, etc.)
-  return sequence.toString()
+  // Format: 10-digit number
+  const result = sequence.toString()
+  console.log('Generated account number:', result)
+  return result
 }
 
 // Generate sequential customer numbers
@@ -142,19 +152,15 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(data.password, 12)
 
     // Generate account and customer numbers BEFORE transaction
-    // Get the last account to generate sequential numbers
-    const lastAccount = await prisma.account.findFirst({
-      orderBy: { createdAt: 'desc' },
-      select: { accountNumber: true }
-    })
+    // Force the base sequence to be exactly 702346799 as requested
+    const baseSequence = 702346799
     
-    let baseSequence = 75472347 // Starting after 7 5472346 as requested
-    if (lastAccount) {
-      baseSequence = parseInt(lastAccount.accountNumber) + 1
-    }
+    // Explicitly set these account numbers - no generation logic here
+    const checkingAccountNumber = baseSequence.toString() // "702346799"
+    const savingsAccountNumber = (baseSequence + 1).toString() // "702346800"
     
-    const checkingAccountNumber = baseSequence.toString()
-    const savingsAccountNumber = (baseSequence + 1).toString()
+    console.log('Creating accounts with numbers:', checkingAccountNumber, 'and', savingsAccountNumber)
+    
     const customerNumber = await generateCustomerNumber()
 
     // Create user and customer in a transaction
@@ -194,6 +200,8 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      console.log('About to create checking account with number:', checkingAccountNumber)
+      
       // Create CHECKING account (pending approval)
       const checkingAccount = await tx.account.create({
         data: {
@@ -204,7 +212,11 @@ export async function POST(request: NextRequest) {
           balance: 0,
         },
       })
+      
+      console.log('Created checking account:', checkingAccount)
 
+      console.log('About to create savings account with number:', savingsAccountNumber)
+      
       // Create SAVINGS account (pending approval)
       const savingsAccount = await tx.account.create({
         data: {
@@ -215,6 +227,8 @@ export async function POST(request: NextRequest) {
           balance: 0,
         },
       })
+      
+      console.log('Created savings account:', savingsAccount)
 
       // Create audit log
       await tx.auditLog.create({

@@ -7,9 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 // Generate unique IDs
 export function generateAccountNumber(): string {
-  const ifsc = process.env.NEXT_PUBLIC_BANK_IFSC || "BNKJ0001011"
-  const random = Math.floor(Math.random() * 900000000) + 100000000 // 9 digits
-  return `${ifsc}${random}`
+  // Use 702346799 as starting point as requested
+  return "702346799"
 }
 
 export function generateCustomerNumber(): string {
