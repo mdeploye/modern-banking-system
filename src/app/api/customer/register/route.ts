@@ -152,15 +152,25 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(data.password, 12)
 
     // Generate account and customer numbers BEFORE transaction
-    // Force the base sequence to be exactly 702346799 as requested
-    const baseSequence = 702346799
-    
-    // Explicitly set these account numbers - no generation logic here
-    const checkingAccountNumber = baseSequence.toString() // "702346799"
-    const savingsAccountNumber = (baseSequence + 1).toString() // "702346800"
-    
-    console.log('Creating accounts with numbers:', checkingAccountNumber, 'and', savingsAccountNumber)
-    
+    // Find the last created account to continue the sequence from there
+    const lastAccount = await prisma.account.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { accountNumber: true },
+    })
+
+    let baseSequence = 702346799
+    if (lastAccount?.accountNumber) {
+      const lastSequence = parseInt(lastAccount.accountNumber)
+      if (!Number.isNaN(lastSequence)) {
+        baseSequence = lastSequence + 1
+      }
+    }
+
+    const checkingAccountNumber = baseSequence.toString()
+    const savingsAccountNumber = (baseSequence + 1).toString()
+
+    console.log("Creating accounts with numbers:", checkingAccountNumber, "and", savingsAccountNumber)
+
     const customerNumber = await generateCustomerNumber()
 
     // Create user and customer in a transaction
