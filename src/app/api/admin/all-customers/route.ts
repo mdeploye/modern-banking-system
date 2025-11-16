@@ -17,15 +17,19 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || ""
 
     const customers = await prisma.customer.findMany({
-      where: search ? {
-        OR: [
-          { customerNumber: { contains: search, mode: "insensitive" } },
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-          { mobile: { contains: search } },
-          { user: { email: { contains: search, mode: "insensitive" } } },
-        ],
-      } : {},
+      where: search
+        ? {
+            OR: [
+              // NOTE: Current Prisma StringFilter for this model doesn't support `mode`,
+              // so we use simple `contains` filters (case-sensitive) for compatibility.
+              { customerNumber: { contains: search } },
+              { firstName: { contains: search } },
+              { lastName: { contains: search } },
+              { mobile: { contains: search } },
+              { user: { email: { contains: search } } },
+            ],
+          }
+        : {},
       include: {
         user: true,
         accounts: true,
