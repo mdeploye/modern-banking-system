@@ -43,12 +43,14 @@ export default function LoginPage() {
           description: "Redirecting to your dashboard...",
         })
         
-        // Redirect based on role
-        if (role === "CUSTOMER") {
-          router.push("/customer/dashboard")
-        } else {
-          router.push("/admin/dashboard")
-        }
+        // Small delay to ensure session is fully established before redirect
+        setTimeout(() => {
+          if (role === "CUSTOMER") {
+            router.replace("/customer/dashboard")
+          } else {
+            router.replace("/admin/dashboard")
+          }
+        }, 500)
       }
     } catch (error) {
       toast({

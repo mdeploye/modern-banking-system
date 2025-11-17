@@ -128,6 +128,9 @@ export default function CustomerDashboard() {
       }
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
+    } finally {
+      // Ensure loading state is cleared even if transactions fail
+      setIsLoading(false)
     }
   }
 
