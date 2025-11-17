@@ -3,9 +3,11 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 
 export async function middleware(request: NextRequest) {
-  // Let Auth.js resolve the secret from environment (AUTH_SECRET / NEXTAUTH_SECRET)
+  // Use Auth.js v5 cookie name so the middleware can actually read the session token
   const token = await getToken({
     req: request,
+    // Auth.js v5 stores the session in this cookie in production
+    cookieName: "__Secure-authjs.session-token",
   })
 
   const isAuthPage = 
