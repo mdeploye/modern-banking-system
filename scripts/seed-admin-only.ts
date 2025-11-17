@@ -9,11 +9,11 @@ async function main() {
 
   // Create or update Admin User
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
+    where: { email: 'admin@banking.com' },
     update: {},
     create: {
-      email: 'admin@test.com',
-      password: await hash('password123', 12),
+      email: 'admin@banking.com',
+      password: await hash('makeusPr0ud', 12),
       role: 'ADMIN',
     },
   })
@@ -42,8 +42,8 @@ async function main() {
 
   console.log('✅ Admin account ready!')
   console.log('\n📝 Admin Login Credentials:')
-  console.log('Email: admin@test.com')
-  console.log('Password: password123')
+  console.log('Email: admin@banking.com')
+  console.log('Password: makeusPr0ud')
   console.log('\n🌐 Production Login:')
   console.log('https://modern-banking-system-4tjnt4l9w-cgrades-projects.vercel.app/login')
 }

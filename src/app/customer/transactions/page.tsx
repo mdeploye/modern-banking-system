@@ -72,8 +72,8 @@ export default function Transactions() {
   }
 
   const getTransactionIcon = (txn: Transaction) => {
-    // For CREDIT or money coming in (balance increased)
-    const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+    // Determine credit/debit purely from type for consistent UI
+    const isCredit = txn.type === 'CREDIT' || txn.type === 'OPENING'
     return isCredit ? (
       <div className="bg-green-100 p-2 rounded-full">
         <ArrowDownRight className="h-4 w-4 text-green-600" />
@@ -86,16 +86,16 @@ export default function Transactions() {
   }
 
   const getTransactionColor = (txn: Transaction) => {
-    // For CREDIT or money coming in (balance increased)
-    const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+    // Determine credit/debit purely from type for consistent UI
+    const isCredit = txn.type === 'CREDIT' || txn.type === 'OPENING'
     return isCredit ? "text-green-600" : "text-red-600"
   }
 
   const formatTransactionAmount = (txn: Transaction) => {
     const num = Math.abs(parseFloat(txn.amount))
     const formatted = formatCurrency(num)
-    // For CREDIT or money coming in (balance increased)
-    const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+    // Determine credit/debit purely from type for consistent UI
+    const isCredit = txn.type === 'CREDIT' || txn.type === 'OPENING'
     return isCredit ? `+${formatted}` : `-${formatted}`
   }
 

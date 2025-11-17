@@ -453,8 +453,8 @@ export default function CustomerDashboard() {
                   <div className="divide-y">
                     {recentTransactions.map((txn, index) => {
                       const amount = Math.abs(parseFloat(txn.amount))
-                      // Check if it's credit OR if balance increased (for TRANSFER type)
-                      const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+                      // Determine credit/debit purely from type for consistent UI
+                      const isCredit = txn.type === 'CREDIT' || txn.type === 'OPENING'
                       // Generate a completely unique key using both index position and a property
                       const mobileKey = `mobile-${index}-${txn.description?.substring(0, 8) || ''}-${Date.now()}-${index}`
                       return (
@@ -611,8 +611,8 @@ export default function CustomerDashboard() {
                   <div className="space-y-3">
                     {recentTransactions.map((txn, index) => {
                       const amount = Math.abs(parseFloat(txn.amount))
-                      // Check if it's credit OR if balance increased (for TRANSFER type)
-                      const isCredit = txn.type === 'CREDIT' || (parseFloat(txn.balanceAfter) > parseFloat(txn.balanceBefore))
+                      // Determine credit/debit purely from type for consistent UI
+                      const isCredit = txn.type === 'CREDIT' || txn.type === 'OPENING'
                       // Generate a completely unique key using both index position and a property
                       const desktopKey = `desktop-${index}-${txn.description?.substring(0, 8) || ''}-${Date.now()}-${index}`
                       return (
