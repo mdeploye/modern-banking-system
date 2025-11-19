@@ -281,10 +281,6 @@ export default function CustomerProfile() {
                 <p className="font-medium">{profile.customerNumber}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Member Since</Label>
-                <p className="font-medium">{format(new Date(profile.createdAt), "MMMM dd, yyyy")}</p>
-              </div>
-              <div>
                 <Label>First Name</Label>
                 {isEditing ? (
                   <Input
